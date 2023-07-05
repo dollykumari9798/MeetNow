@@ -1,24 +1,36 @@
 # MyTeams_video_chat
 
-## Run the webapp
-After Cloning the given repo, run-
+## Set Up the server and Run
 
-**[npm install](https://docs.npmjs.com/cli/v7/commands/npm-install)** - Install the required dependencies
+- After Cloning the given repo, run-
 
-**[node server.js](https://stackabuse.com/how-to-start-a-node-server-examples-with-the-most-popular-frameworks)** - Run the server
+- **[npm install](https://docs.npmjs.com/cli/v7/commands/npm-install)** - Install the required dependencies
 
+- #### For setting up **Nodemailer** services:
+  Create a `.env` file and add `MAIL_USERNAME`, `MAIL_PASSWORD`, `PORT` variables to it.
+
+  1. Add the email id to be used for nodemailer as a value for `MAIL_USERNAME`.
+  2. Add the generated [app password](https://youtu.be/lBRnLXwjLw0?t=983) to be used for nodemailer as a value for `MAIL_USERNAME`.
+  3. Add desired port number to run the server as a value for `PORT`.
+
+- Use `nodemon` to run the server
+---
 ## Technology used
+
 **Backend**: Node js , Express js
 
 **Frontend**: HTML , CSS , JS , JQ, Bootstrap
 
 **WebSocket**: socket.io
 
-**WebRTC**:peerjs server and client
+**WebRTC**: peerjs server and client
 
 **Database**: MongoDB
 
+---
+
 ## Features
+
 ### User Authentication: 
  - **Signup , Signin, Logout** - Signin stores the user session for 2 days and Logout clears the **session**.
  
@@ -45,10 +57,5 @@ After Cloning the given repo, run-
  
   - **Leave meeting** - User may click on this button to leave the meeting and go to the home page.
 
-## Agile methodologies used
-
-*Initially I was given the task to only implement the video sharing feature, But later it was said to also integrate the chat room feature in it, So my codebase was modular and flexible enough to integrate this new feature in it*
-
-*The intitial version of the product made by me was in itself complete and deployable, but it was also clean enough to allow testing and adding features to be easily done.*
 
 
