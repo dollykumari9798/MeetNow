@@ -14,7 +14,7 @@
   3. Add desired port number to run the server as a value for `PORT`.
 
 - Use `nodemon` to run the server
----
+
 ## Technology used
 
 **Backend**: Node js , Express js
@@ -27,7 +27,6 @@
 
 **Database**: MongoDB
 
----
 
 ## Features
 
