@@ -111,3 +111,13 @@ button {
 .navbar{
     box-shadow: 0 0.51rem 1rem 0.2rem #95959552;;
 }
+.navbar #navbarSupportedContent div:nth-child(1) span{
+    text-transform: uppercase;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+.navbar #navbarSupportedContent .userImg{
+    height: 3rem;
+    width: 3rem;
+    margin: 0 0.5rem;
+}

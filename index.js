@@ -1,15 +1,11 @@
 // importing libraries
 const hbs = require("hbs");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
 const express = require("express");
 const path = require("path");
 const passport = require("passport");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
-const bcrypt = require("bcryptjs");
-const async = require("async");
-const crypto = require("crypto");
 const user = require("./model/User.js");
 const flash = require("connect-flash");
 const bodyParser = require("body-parser");
@@ -18,6 +14,8 @@ const { v4: uuidV4 } = require("uuid");
 const {checkauth,checkauthenticated} = require('./middlewares/authMiddleware.js')
 const authRoutes = require('./Routes/authRoutes.js')
 const app = express();
+require('dotenv').config()
+
 
 const server = require("http").Server(app);
 const io = require("socket.io")(server);
@@ -52,7 +50,6 @@ app.use(flash());
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
-// var localstrategy = require("passport-local").Strategy;
 
 app.use(authRoutes)
 
@@ -94,11 +91,8 @@ app.get("/signup", (req, res) => {
 });
 
 app.get("/logout", function (req, res) {
-    var name = req.user.username;
-    console.log("LOGGIN OUT " + req.user.username);
     req.logout();
     res.redirect("/");
-    req.session.notice = "You have successfully been logged out " + name + "!";
 });
 
 app.get("/users/:username", checkauth, (req, res) => {
@@ -111,7 +105,6 @@ app.get("/", checkauth, (req, res) => {
 
 
 app.get("/roomid/:room", checkauthenticated, (req, res) => {
-    console.log("this is room");
     res.render("./public/chatui", { roomId: req.params.room, user: req.user });
 });
 app.post("/users/joinmeet", urlencodedParser, function (req, res) {
@@ -125,28 +118,18 @@ app.post("/joinmeet", urlencodedParser, function (req, res) {
 
 //--------------------------------------------------------
 
-//--------------
-
 io.on("connection", (socket) => {
     socket.on("join-room", (roomId, userId) => {
-        console.log("joined room");
         socket.join(roomId);
         socket.to(roomId).emit("user-connected", userId);
-        // io.to(roomId).emit('buildparticipants');
-        //   messages
         socket.on("message", (message, uname) => {
-            //send message to the same room
             io.to(roomId).emit("createMessage", message, uname);
         });
         socket.on("disconnect", () => {
-            console.log("disconnect user");
             socket.to(roomId).emit("user-disconnected", userId);
-            // io.to(roomId).emit('buildparticipants');
         });
     });
 });
-
-//--------------
 
 //----------------------------------
 
@@ -155,79 +138,6 @@ app.get("/forgot", function (req, res) {
         User: req.user,
     });
 });
-
-// app.post("/forgot", function (req, res, next) {
-//     async.waterfall(
-//         [
-//             function (done) {
-//                 crypto.randomBytes(20, function (err, buf) {
-//                     var token = buf.toString("hex");
-//                     done(err, token);
-//                 });
-//             },
-//             function (token, done) {
-//                 user.findOne({ email: req.body.email }, function (err, data) {
-//                     if (!data) {
-//                         req.flash(
-//                             "error_message",
-//                             "No account with that email address exists."
-//                         );
-//                         return res.redirect("/forgot");
-//                     }
-
-//                     data.resetPasswordToken = token;
-//                     data.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-
-//                     data.save(function (err) {
-//                         done(err, token, data);
-//                     });
-//                 });
-//             },
-//             function (token, user, done) {
-//                 // var smtpTransport = nodemailer.createTransport('SMTP', {
-//                 //     service: 'gmail',
-//                 //     auth: {
-//                 //         user: 'ghoshsanchita656@gmail.com',
-//                 //         pass: 'Sanchita@123'
-//                 //     }
-//                 // });
-//                 //"myteams-video-chat.herokuapp.com"
-//                 var smtpTransport = nodemailer.createTransport(
-//                     "smtps://ghoshsanchita656%40gmail.com:" +
-//                         encodeURIComponent("Sanchita@123") +
-//                         "@smtp.gmail.com:465"
-//                 );
-//                 var mailOptions = {
-//                     to: user.email,
-//                     from: "sanchitag507@gmail.com",
-//                     subject: "Reset your Password",
-//                     text:
-//                         "You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n" +
-//                         "Please click on the following link, or paste this into your browser to complete the process:\n\n" +
-//                         "http://" +
-//                         "localhost:4040" +
-//                         "/reset/" +
-//                         token +
-//                         "\n\n" +
-//                         "If you did not request this, please ignore this email and your password will remain unchanged.\n",
-//                 };
-//                 smtpTransport.sendMail(mailOptions, function (err) {
-//                     req.flash(
-//                         "success_message",
-//                         "An e-mail has been sent to " +
-//                             user.email +
-//                             " with further instructions."
-//                     );
-//                     done(err, "done");
-//                 });
-//             },
-//         ],
-//         function (err) {
-//             if (err) return next(err);
-//             res.redirect("/forgot");
-//         }
-//     );
-// });
 
 app.get("/reset/:token", function (req, res) {
     user.findOne(
@@ -243,7 +153,7 @@ app.get("/reset/:token", function (req, res) {
                 );
                 return res.redirect("/forgot");
             }
-            res.render("reset-password", {
+            res.render("./public/reset-password", {
                 token: req.params.token,
                 user: req.user,
             });
@@ -251,103 +161,9 @@ app.get("/reset/:token", function (req, res) {
     );
 });
 
-app.post("/reset/:token", function (req, res) {
-    async.waterfall(
-        [
-            function (done) {
-                user.findOne(
-                    {
-                        resetPasswordToken: req.params.token,
-                        resetPasswordExpires: { $gt: Date.now() },
-                    },
-                    function (err, data) {
-                        if (!data) {
-                            req.flash(
-                                "error_message",
-                                "Password reset token is invalid or has expired."
-                            );
-                            return res.redirect("/forgot");
-                        }
-                        var pass = req.body.password;
-                        var conpass = req.body.confirmpassword;
-                        if (!pass || !conpass || pass != conpass) {
-                            req.flash(
-                                "error_message",
-                                "Passwords dont match !"
-                            );
-                            data.resetPasswordToken = undefined;
-                            data.resetPasswordExpires = undefined;
-                            data.save(function (err) {
-                                return res.redirect("/forgot");
-                            });
-                        }
-                        bcrypt.genSalt(10, (err, salt) => {
-                            if (err) {
-                                console.log("error in salting");
-                                console.log(err);
-                            }
-                            bcrypt.hash(pass, salt, (err, hash) => {
-                                if (err) {
-                                    console.log("error in hashing");
-                                    console.log(err);
-                                }
-                                data.password = hash;
-                                data.resetPasswordToken = undefined;
-                                data.resetPasswordExpires = undefined;
-                                data.save(function (err) {
-                                    // req.logIn(data, function(err) {
-                                    done(err, data);
-                                    // });
-                                });
-                            });
-                        });
-
-                        // data.password = req.body.password;
-                        // data.resetPasswordToken = undefined;
-                        // data.resetPasswordExpires = undefined;
-                    }
-                );
-            },
-            function (user, done) {
-                // var smtpTransport = nodemailer.createTransport('SMTP', {
-                //     service: 'gmail',
-                //     auth: {
-                //         user: 'ghoshsanchita656@gmail.com',
-                //         pass: 'Sanchita@123'
-                //     }
-                // });
-                var smtpTransport = nodemailer.createTransport(
-                    "smtps://ghoshsanchita656%40gmail.com:" +
-                        encodeURIComponent("Sanchita@123") +
-                        "@smtp.gmail.com:465"
-                );
-                var mailOptions = {
-                    to: user.email,
-                    from: "ghoshsanchita656@gmail.com",
-                    subject: "Your password has been changed",
-                    text:
-                        "Hello,\n\n" +
-                        "This is a confirmation that the password for your account " +
-                        user.email +
-                        " has just been changed.\n",
-                };
-                smtpTransport.sendMail(mailOptions, function (err) {
-                    req.flash(
-                        "success_message",
-                        "Success! Your password has been changed.Login"
-                    );
-                    done(err);
-                });
-            },
-        ],
-        function (err) {
-            res.redirect("/signin");
-        }
-    );
-});
 
 //-----------------------------------
-
-server.listen(process.env.PORT || 5000, () => {
-    console.log(`server running on http://localhost:5000`);
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+    console.log(`server running on http://localhost:${PORT}`);
 });

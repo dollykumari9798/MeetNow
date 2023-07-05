@@ -20,7 +20,8 @@
             $(document).ready(function(){ $(".dropdown").hover(function(){ var
             dropdownMenu = $(this).children(".dropdown-menu");
             if(dropdownMenu.is(":visible")){
-            dropdownMenu.parent().toggleClass("open"); } }); });
+            dropdownMenu.parent().toggleClass("open"); } }); 
+            });
         </script>
         {{! <script src="../assets/scripts/home.js"></script> }}
     </head>
@@ -38,11 +39,11 @@
                     id="navbarSupportedContent"
                 >
                     {{#if user}}
-                        <div class="p-3"><a
-                                class="btn btn-primary"
-                                href="#"
-                                role="button"
-                            >{{user.username}}</a></div>
+                        <div class="p-3"><img
+                                class="userImg"
+                                src="../assets/imgs/user.png"
+                                alt=""
+                            /><span>{{user.username}}</span></div>
                         <div class="p-3"><a
                                 class="btn btn-primary"
                                 href="/logout"

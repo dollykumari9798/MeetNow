@@ -11,6 +11,7 @@ router.post('/signup',urlencodedParser,authController.signup_post);
 
 router.post('/signin',urlencodedParser,authController.signin_post);
 router.post('/forgot',urlencodedParser,authController.forgot_post);
+router.post('/reset/:token',urlencodedParser,authController.reset_post);
 
 
 module.exports =router;

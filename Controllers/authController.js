@@ -135,19 +135,13 @@ module.exports.forgot_post = (req, res, next) => {
                 });
             },
             function (token, User, done) {
-                // var smtpTransport = nodemailer.createTransport('SMTP', {
-                //     service: 'gmail',
-                //     auth: {
-                //         user: 'ghoshsanchita656@gmail.com',
-                //         pass: 'Sanchita@123'
-                //     }
-                // });
-                //"myteams-video-chat.herokuapp.com"
-                var smtpTransport = nodemailer.createTransport(
-                    "smtps://dollypandey979850%40gmail.com:" +
-                        encodeURIComponent("dollypandey@123") +
-                        "@smtp.gmail.com:465"
-                );
+                var smtpTransport = nodemailer.createTransport({
+                    service: "gmail",
+                    auth: {
+                        user: process.env.MAIL_USERNAME,
+                        pass: process.env.MAIL_PASSWORD,
+                    },
+                });
                 var mailOptions = {
                     to: User.email,
                     from: "dollypandey979850@gmail.com",
@@ -156,13 +150,14 @@ module.exports.forgot_post = (req, res, next) => {
                         "You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n" +
                         "Please click on the following link, or paste this into your browser to complete the process:\n\n" +
                         "http://" +
-                        "localhost:4040" +
+                        `localhost:${process.env.PORT}` +
                         "/reset/" +
                         token +
                         "\n\n" +
                         "If you did not request this, please ignore this email and your password will remain unchanged.\n",
                 };
                 smtpTransport.sendMail(mailOptions, function (err) {
+                    console.log("success");
                     req.flash(
                         "success_message",
                         "An e-mail has been sent to " +
@@ -171,11 +166,96 @@ module.exports.forgot_post = (req, res, next) => {
                     );
                     done(err, "done");
                 });
+            // res.redirect("/login"),
             },
         ],
         function (err) {
             if (err) return next(err);
             res.redirect("/forgot");
+        }
+    );
+};
+
+module.exports.reset_post = (req, res) => {
+    async.waterfall(
+        [
+            function (done) {
+                User.findOne(
+                    {
+                        resetPasswordToken: req.params.token,
+                        resetPasswordExpires: { $gt: Date.now() },
+                    },
+                    function (err, data) {
+                        if (!data) {
+                            req.flash(
+                                "error_message",
+                                "Password reset token is invalid or has expired."
+                            );
+                            return res.redirect("/forgot");
+                        }
+                        var pass = req.body.password;
+                        var conpass = req.body.confirmpassword;
+                        if (!pass || !conpass || pass != conpass) {
+                            req.flash(
+                                "error_message",
+                                "Passwords dont match !"
+                            );
+                            data.resetPasswordToken = undefined;
+                            data.resetPasswordExpires = undefined;
+                            data.save(function (err) {
+                                return res.redirect("/forgot");
+                            });
+                        }
+                        bcrypt.genSalt(10, (err, salt) => {
+                            if (err) {
+                                console.log("error in salting");
+                                console.log(err);
+                            }
+                            bcrypt.hash(pass, salt, (err, hash) => {
+                                if (err) {
+                                    console.log("error in hashing");
+                                    console.log(err);
+                                }
+                                data.password = hash;
+                                data.resetPasswordToken = undefined;
+                                data.resetPasswordExpires = undefined;
+                                data.save(function (err) {
+                                    done(err, data);
+                                });
+                            });
+                        });
+                    }
+                );
+            },
+            function (user, done) {
+                var smtpTransport = nodemailer.createTransport({
+                    service: "gmail",
+                    auth: {
+                        user: process.env.MAIL_USERNAME,
+                        pass: process.env.MAIL_PASSWORD,
+                    },
+                });
+                var mailOptions = {
+                    to: user.email,
+                    from: "dollypandey979850@gmail.com",
+                    subject: "Your password has been changed",
+                    text:
+                        "Hello,\n\n" +
+                        "This is a confirmation that the password for your account " +
+                        user.email +
+                        " has just been changed.\n",
+                };
+                smtpTransport.sendMail(mailOptions, function (err) {
+                    req.flash(
+                        "success_message",
+                        "Success! Your password has been changed.Login"
+                    );
+                    done(err);
+                });
+            },
+        ],
+        function (err) {
+            res.redirect("/signin");
         }
     );
 };
